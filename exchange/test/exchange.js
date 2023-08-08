@@ -1,10 +1,5 @@
 const { expect } = require("chai")
-const { ethers } = require("hardhat")
-
-
-// const token = (n) => {
-//     return 
-// }
+const { ethers, userConfig } = require("hardhat")
 
 describe('Exchange', () => {
     let accounts, feeAccount, exchange,token_1, deployer, user_1 
@@ -69,6 +64,51 @@ describe('Exchange', () => {
         describe('Failure', () => {
             it ('fails when no token are approveed ', async () => {
                 await expect (exchange.connect(user_1).depositToken(token_1.address, amount)).to.be.reverted
+            })
+        })
+    })
+
+    describe ('withdrawing token' ,() => {
+        let tranact , res 
+        const amount = '1000000000000000000000'
+        beforeEach(async () => {
+            // deposit token before withdraw
+
+            // tranfer token to user 1
+            tranact = await token_1.connect(deployer).transfer(user_1.address, amount)
+            await tranact.wait()
+            // approve token
+            tranact = await token_1.connect(user_1).approve(exchange.address, amount)
+            res = await tranact.wait()
+            // deposit token
+            tranact = await exchange.connect(user_1).depositToken(token_1.address, amount)
+            res = await tranact.wait()
+
+            // now widthraw token
+            tranact = await exchange.connect(user_1).withdrawToken(token_1.address, amount)
+            res = await tranact.wait()
+        })
+        describe('Success', () => {
+            it ('withdraw token  funds', async () => {
+                expect(await token_1.balanceOf(exchange.address)).to.equal(0)
+                expect(await exchange.tokens(token_1.address, user_1.address)).to.equal(0)
+                expect(await exchange.balanceOf(token_1.address, user_1.address)).to.equal(0)
+
+            })
+            it ('emit a withdraw event', async () => {
+                const event= res.events[1]
+                expect(event.event).to.equal('Withdraw')
+                
+                const args= event.args
+                expect(args.token).to.equal(token_1.address)
+                expect(args.user).to.equal(user_1.address)
+                expect(args.amount).to.equal(amount)
+                expect(args.balance).to.equal(0)    
+            })
+        })
+        describe('Failure', () => {
+            it ('fails for less balance ', async () => {
+                await expect (exchange.connect(user_1).withdrawToken(token_1.address, amount)).to.be.reverted
             })
         })
     })
