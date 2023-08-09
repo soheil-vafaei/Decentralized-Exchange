@@ -136,11 +136,7 @@ describe('Exchange', () => {
                 // deposit token
                 tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(100))
                 res = await tranact.wait()
-
-                // approve token
-                tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
-                res = await tranact.wait()
-                // deposit token
+                // making order token
                 tranact = await exchange.connect(user_1).makeOrder(token_2.address, _token(10), token_1.address, _token(10))
                 res = await tranact.wait()
             })
@@ -163,8 +159,47 @@ describe('Exchange', () => {
         })
         describe('Failure', () => {
             it('rejected with no balance', async () => {
-                await expect (exchange.connect(user_1).makeOrder(token_1.address, _token(10), token_2.address, _token(10))).to.be.reverted  
+                await expect(exchange.connect(user_1).makeOrder(token_1.address, _token(10), token_2.address, _token(10))).to.be.reverted
             })
         })
+    })
+
+    describe('order action', () => {
+        let tranact, res
+        beforeEach(async () => {
+            // tranfer token to user 1
+            tranact = await token_2.connect(deployer).transfer(user_1.address, _token(100))
+            await tranact.wait()
+
+            await tranact.wait()
+            // approve token/
+            tranact = await token_2.connect(user_1).approve(exchange.address, _token(100))
+            res = await tranact.wait()
+            // deposit token/
+            tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(100))
+            res = await tranact.wait()
+
+            // approve token
+            // tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
+            // res = await tranact.wait()
+            // deposit token
+            tranact = await exchange.connect(user_1).makeOrder(token_2.address, _token(10), token_1.address, _token(10))
+            res = await tranact.wait()
+        })
+        describe('cansel order', async () => {
+            describe('success', async () => {
+                beforeEach(async() => {
+                    tranact = await exchange.connect(user_1).canselOrder(1)
+                    res = await tranact.wait()
+                })
+                it ('update cansel orders', async()=>{
+                    // expect(await exchange.orderCanselled(1).to.equal(true))
+                })
+            })
+            describe('failure', async () => {
+
+            })
+        })
+
     })
 })

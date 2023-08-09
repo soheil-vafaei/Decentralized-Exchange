@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "hardhat/console.sol";
 import "./Token.sol";
 
 contract Exchange{
@@ -12,6 +11,7 @@ contract Exchange{
     mapping (address => mapping (address => uint256)) public tokens;
     mapping (uint256 => _Order) public orders;
     uint256 public orderCount ;
+    mapping (uint256 => bool) public orderCanselled;
 
     // order mappings
     struct _Order {
@@ -89,6 +89,13 @@ contract Exchange{
 
         // emit event
         emit Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGiv, _amountGiv, block.timestamp);
+    }
+
+    function canselOrder (uint256 _id) public {
+        // fetch order
+        _Order storage _order = orders[_id];
+
+        orderCanselled [_id] = true;
     }
 
 }
