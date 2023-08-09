@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "./Token.sol";
+import "hardhat/console.sol";
 
 contract Exchange{
 
@@ -28,7 +29,8 @@ contract Exchange{
     event Deposit (address indexed token, address indexed user, uint256 amount, uint256 balance);
     event Withdraw (address indexed token, address indexed user, uint256 amount, uint256 balance);
     event Order (uint256 orderCount, address indexed user, address indexed tokenGet, uint256 amountGet, address indexed tokenGiv, uint256 amountGiv, uint256 timestamp);
-
+    event Cansel (uint256 orderCount, address indexed user, address indexed tokenGet, uint256 amountGet, address indexed tokenGiv, uint256 amountGiv, uint256 timestamp);
+ 
 
     constructor(address _feeAccount, uint256 _feePercentage){
         feeAccount = _feeAccount;
@@ -91,11 +93,18 @@ contract Exchange{
         emit Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGiv, _amountGiv, block.timestamp);
     }
 
-    function canselOrder (uint256 _id) public {
+    function canselOrder (uint256 id_) public {
         // fetch order
-        _Order storage _order = orders[_id];
+        _Order storage _order = orders[id_];
 
-        orderCanselled [_id] = true;
+        require(address(_order._user)== msg.sender, "you are can not cansel this order");
+        require(_order._id == id_, "thats order is not exist");
+
+        // cansel
+        orderCanselled [id_] = true;
+        
+        // emit event
+        emit Cansel(_order._id, msg.sender, _order._tokenGet, _order._amountGet, _order._tokenGiv, _order._amountGiv, block.timestamp);
     }
 
 }

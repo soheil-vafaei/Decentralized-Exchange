@@ -36,6 +36,9 @@
     ]
   },
   "devDependencies": {
-    "ethers": "^6.6.5"
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.1",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "chai": "^4.3.7",
+    "ethers": "^6.7.0"
   }
 }

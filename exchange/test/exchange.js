@@ -1,5 +1,5 @@
 const { expect } = require("chai")
-const { ethers, userConfig } = require("hardhat")
+const { ethers } = require("hardhat")
 
 const _token = (n) => {
     let _n
@@ -8,7 +8,7 @@ const _token = (n) => {
 }
 
 describe('Exchange', () => {
-    let accounts, feeAccount, exchange, token_1, token_2, deployer, user_1
+    let accounts, feeAccount, exchange, token_1, token_2, deployer, user_1, user_2
     const feePercent = 10
 
     beforeEach(async () => {
@@ -22,7 +22,7 @@ describe('Exchange', () => {
         deployer = accounts[0]
         feeAccount = accounts[1]
         user_1 = accounts[2]
-
+        user_2 = accounts[3]
 
         exchange = await Exchange.deploy(feeAccount.address, feePercent)
 
@@ -192,12 +192,30 @@ describe('Exchange', () => {
                     tranact = await exchange.connect(user_1).canselOrder(1)
                     res = await tranact.wait()
                 })
-                it ('update cansel orders', async()=>{
-                    // expect(await exchange.orderCanselled(1).to.equal(true))
+                it('upd Cansel orders', async () => {
+                    expect(await exchange.orderCanselled(1)).to.equal(true);
+                })
+                it('emit a cansel event', async () => {
+                    const event = res.events[0]
+                    expect(event.event).to.equal('Cansel')
+    
+                    const args = event.args
+                    expect(args.orderCount).to.equal(1)
+                    expect(args.user).to.equal(user_1.address)
+                    expect(args.tokenGet).to.equal(token_2.address)
+                    expect(args.amountGet).to.equal(_token(10))
+                    expect(args.tokenGiv).to.equal(token_1.address)
+                    expect(args.amountGiv).to.equal(_token(10))
+                    expect(args.timestamp).to.at.least(0)
                 })
             })
             describe('failure', async () => {
-
+                it('rejected invalid order id', async () => {
+                    await expect(exchange.connect(user_1).canselOrder(100)).to.be.reverted
+                }) 
+                it('rejected another user cant cansel the order', async () => {
+                    await expect(exchange.connect(user_2).canselOrder(1)).to.be.reverted
+                })  
             })
         })
 
