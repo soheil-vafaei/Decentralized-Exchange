@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "./Token.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract Exchange{
 
@@ -102,7 +102,7 @@ contract Exchange{
 
         // cansel
         orderCanselled [id_] = true;
-        
+
         // emit event
         emit Cansel(_order._id, msg.sender, _order._tokenGet, _order._amountGet, _order._tokenGiv, _order._amountGiv, block.timestamp);
     }
