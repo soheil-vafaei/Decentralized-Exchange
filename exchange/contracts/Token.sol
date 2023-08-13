@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 
 contract Token
 {
     string public name;
     string public symbol;
-    uint256 public decimals= 18;
+    uint256 public decimals= 9;
     uint256 public totalSupply;
 
     mapping (address => uint256)public balanceOf;

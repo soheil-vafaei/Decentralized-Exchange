@@ -15,8 +15,8 @@ describe('Exchange', () => {
         const Exchange = await ethers.getContractFactory('Exchange')
         const Token = await ethers.getContractFactory('Token')
 
-        token_1 = await Token.deploy("SOLI", "SOL", 100000)
-        token_2 = await Token.deploy("SOLI DAI", "sDAI", 100000)
+        token_1 = await Token.deploy("SOLI", "SOL", _token(100))
+        token_2 = await Token.deploy("SOLI DAI", "sDAI", _token(100))
 
         accounts = await ethers.getSigners()
         deployer = accounts[0]
@@ -77,22 +77,21 @@ describe('Exchange', () => {
 
     describe('withdrawing token', () => {
         let tranact, res
-        const amount = '1000000000000000000000'
         beforeEach(async () => {
             // deposit token before withdraw
 
             // tranfer token to user 1
-            tranact = await token_1.connect(deployer).transfer(user_1.address, amount)
+            tranact = await token_1.connect(deployer).transfer(user_1.address, _token(10))
             await tranact.wait()
             // approve token
-            tranact = await token_1.connect(user_1).approve(exchange.address, amount)
+            tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
             res = await tranact.wait()
             // deposit token
-            tranact = await exchange.connect(user_1).depositToken(token_1.address, amount)
+            tranact = await exchange.connect(user_1).depositToken(token_1.address, _token(10))
             res = await tranact.wait()
 
             // now widthraw token
-            tranact = await exchange.connect(user_1).withdrawToken(token_1.address, amount)
+            tranact = await exchange.connect(user_1).withdrawToken(token_1.address, _token(10))
             res = await tranact.wait()
         })
         describe('Success', () => {
@@ -109,13 +108,13 @@ describe('Exchange', () => {
                 const args = event.args
                 expect(args.token).to.equal(token_1.address)
                 expect(args.user).to.equal(user_1.address)
-                expect(args.amount).to.equal(amount)
+                expect(args.amount).to.equal(_token(10))
                 expect(args.balance).to.equal(0)
             })
         })
         describe('Failure', () => {
             it('fails for less balance ', async () => {
-                await expect(exchange.connect(user_1).withdrawToken(token_1.address, amount)).to.be.reverted
+                await expect(exchange.connect(user_1).withdrawToken(token_1.address, _token(10))).to.be.reverted
             })
         })
     })
@@ -126,15 +125,15 @@ describe('Exchange', () => {
         describe('Success', () => {
             beforeEach(async () => {
                 // tranfer token to user 1
-                tranact = await token_2.connect(deployer).transfer(user_1.address, _token(100))
+                tranact = await token_2.connect(deployer).transfer(user_1.address, _token(10))
                 await tranact.wait()
 
                 await tranact.wait()
                 // approve token
-                tranact = await token_2.connect(user_1).approve(exchange.address, _token(100))
+                tranact = await token_2.connect(user_1).approve(exchange.address, _token(10))
                 res = await tranact.wait()
                 // deposit token
-                tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(100))
+                tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(10))
                 res = await tranact.wait()
                 // making order token
                 tranact = await exchange.connect(user_1).makeOrder(token_2.address, _token(10), token_1.address, _token(10))
@@ -167,28 +166,33 @@ describe('Exchange', () => {
     describe('order action', () => {
         let tranact, res
         beforeEach(async () => {
-            // tranfer token to user 1
-            tranact = await token_2.connect(deployer).transfer(user_1.address, _token(100))
+            // tranfer token_2 to user 1
+            tranact = await token_1.connect(deployer).transfer(user_1.address, _token(100))
             await tranact.wait()
 
+            tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
             await tranact.wait()
-            // approve token/
-            tranact = await token_2.connect(user_1).approve(exchange.address, _token(100))
-            res = await tranact.wait()
+
             // deposit token/
-            tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(100))
+            tranact = await exchange.connect(user_1).depositToken(token_1.address, _token(10))
             res = await tranact.wait()
 
-            // approve token
-            // tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
-            // res = await tranact.wait()
-            // deposit token
-            tranact = await exchange.connect(user_1).makeOrder(token_2.address, _token(10), token_1.address, _token(10))
+            tranact = await token_2.connect(deployer).transfer(user_2.address, _token(100))
+            await tranact.wait()
+
+            // approve token/
+            tranact = await token_2.connect(user_2).approve(exchange.address, _token(10))
+            res = await tranact.wait()
+
+            tranact = await exchange.connect(user_2).depositToken(token_2.address, _token(10))
+            res = await tranact.wait()
+
+            tranact = await exchange.connect(user_1).makeOrder(token_1.address, _token(10), token_2.address, _token(10))
             res = await tranact.wait()
         })
         describe('cansel order', async () => {
             describe('success', async () => {
-                beforeEach(async() => {
+                beforeEach(async () => {
                     tranact = await exchange.connect(user_1).canselOrder(1)
                     res = await tranact.wait()
                 })
@@ -198,13 +202,13 @@ describe('Exchange', () => {
                 it('emit a cansel event', async () => {
                     const event = res.events[0]
                     expect(event.event).to.equal('Cansel')
-    
+
                     const args = event.args
                     expect(args.orderCount).to.equal(1)
                     expect(args.user).to.equal(user_1.address)
-                    expect(args.tokenGet).to.equal(token_2.address)
+                    expect(args.tokenGet).to.equal(token_1.address)
                     expect(args.amountGet).to.equal(_token(10))
-                    expect(args.tokenGiv).to.equal(token_1.address)
+                    expect(args.tokenGiv).to.equal(token_2.address)
                     expect(args.amountGiv).to.equal(_token(10))
                     expect(args.timestamp).to.at.least(0)
                 })
@@ -212,11 +216,40 @@ describe('Exchange', () => {
             describe('failure', async () => {
                 it('rejected invalid order id', async () => {
                     await expect(exchange.connect(user_1).canselOrder(100)).to.be.reverted
-                }) 
+                })
                 it('rejected another user cant cansel the order', async () => {
                     await expect(exchange.connect(user_2).canselOrder(1)).to.be.reverted
-                })  
+                })
             })
+        })
+
+    })
+
+    describe('filling orders', () => {
+        let tranact, res
+        beforeEach(async () => {
+            // tranfer token to user 1
+            tranact = await token_2.connect(deployer).transfer(user_1.address, _token(10))
+            await tranact.wait()
+
+            await tranact.wait()
+            // approve token
+            tranact = await token_2.connect(user_1).approve(exchange.address, _token(10))
+            res = await tranact.wait()
+            // deposit token
+            tranact = await exchange.connect(user_1).depositToken(token_2.address, _token(10))
+            res = await tranact.wait()
+            // making order token
+            tranact = await exchange.connect(user_1).makeOrder(token_2.address, _token(10), token_1.address, _token(10))
+            res = await tranact.wait()
+
+            tranact = await exchange.connect(user_2).fillOrder(1)
+            // res = await tranact.wait()
+        })
+        it('excute trades and charge the fees', async () => {
+            // enshre trade happens
+            expect(await exchange.balanceOf(token_1.address, user_1.address)).to.equal(0)
+            expect(await exchange.balanceOf(token_1.address, user_2.address)).to.equal(_token(1))
         })
 
     })

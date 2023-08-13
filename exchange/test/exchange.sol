@@ -43,7 +43,7 @@ contract Exchange{
     function depositToken (address _token, uint256 _amount) public 
     {
         // transfer token to dex
-        require(Token(_token).tranferFrom(msg.sender, address(this),_amount));
+        require(Token(_token).tranferFrom(msg.sender, address(this),_amount), "cant transfer from to exchange");
         // upd balance
         tokens[_token][msg.sender] += _amount;
         // emit an event
@@ -105,6 +105,40 @@ contract Exchange{
 
         // emit event
         emit Cansel(_order._id, msg.sender, _order._tokenGet, _order._amountGet, _order._tokenGiv, _order._amountGiv, block.timestamp);
+    }
+
+    // Excuting order 
+    function fillOrder (uint256 id_) public 
+    {
+        // swapping token <trade>//
+        // fetch order
+        _Order storage _order = orders[id_];
+        // require(_order._id == id_, "thats order is not exist");
+        _trade(_order._id, _order._user, _order._tokenGet, _order._amountGet, _order._tokenGiv, _order._amountGiv);
+
+    }
+
+    function _trade (uint256 _orderId, address _user, address _tokenGet, uint256 _amountGet, address _tokenGiv, uint256 _amountGiv) internal 
+    {
+        // do trade here/ 
+        // get fee from msg.sender user 2
+        uint256 feeAmount =  (_amountGet * feePercentage) / 100;
+
+        // console.log("user get",tokens [_tokenGet][_user], "msgS get", tokens [_tokenGet][msg.sender] += _amountGet);
+        // console.log("user giv",tokens [_tokenGiv][_user], "msgS giv", tokens [_tokenGiv][msg.sender] += _amountGiv);
+
+        tokens [_tokenGet][msg.sender] -= (_amountGet + feeAmount);
+        tokens [_tokenGet][_user] += _amountGet;
+
+        tokens[_tokenGet][feeAccount] += feeAmount;
+
+        tokens [_tokenGiv][_user] -= _amountGiv;
+        tokens [_tokenGiv][msg.sender] += _amountGiv;
+
+        // console.log("user giv",tokens [_tokenGiv][_user], "msgS giv", tokens [_tokenGiv][msg.sender] += _amountGiv);
+
+
+
     }
 
 }
