@@ -12,6 +12,7 @@ contract Exchange {
     mapping(uint256 => _Order) public orders;
     uint256 public orderCount;
     mapping(uint256 => bool) public orderCanselled;
+    mapping(uint256 => bool) public orderFailled;
 
     // order mappings
     struct _Order {
@@ -171,8 +172,10 @@ contract Exchange {
     function fillOrder(uint id_) public {
         // swapping token <trade>//
         // fetch order
-        _Order memory _order = orders[id_];
-        // require(_order._id == id_, "thats order is not exist");
+        require (id_ > 0 && id_ <= orderCount, "order is not exist");
+        require(!orderFailled[id_],"this order is failled already");
+        require(!orderCanselled[id_], "this order is canseled");
+        _Order storage _order = orders[id_];
         _trade(
             _order._id,
             _order._user,
@@ -181,6 +184,8 @@ contract Exchange {
             _order._tokenGiv,
             _order._amountGiv
         );
+
+        orderFailled[_order._id] = true;
     }
 
     function _trade(

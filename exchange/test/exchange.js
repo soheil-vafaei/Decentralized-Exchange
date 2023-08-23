@@ -226,53 +226,67 @@ describe('Exchange', () => {
     })
 
     describe('filling orders', () => {
-        let tranact, res
-        beforeEach(async () => {
-            tranact = await token_1.connect(deployer).transfer(user_1.address, _token(10))
-            await tranact.wait()
-            tranact = await token_2.connect(deployer).transfer(user_2.address, _token(10))
-            await tranact.wait()
+        describe ('Success', () => {
+            let tranact, res
+            beforeEach(async () => {
+                tranact = await token_1.connect(deployer).transfer(user_1.address, _token(10))
+                await tranact.wait()
+                tranact = await token_2.connect(deployer).transfer(user_2.address, _token(10))
+                await tranact.wait()
+    
+                // approve token
+                tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
+                res = await tranact.wait()
+                tranact = await token_2.connect(user_2).approve(exchange.address, _token(10))
+                res = await tranact.wait()
+    
+                // deposit token
+                tranact = await exchange.connect(user_1).depositToken(token_1.address, _token(10))
+                res = await tranact.wait()
+                tranact = await exchange.connect(user_2).depositToken(token_2.address, _token(10))
+                res = await tranact.wait()
+    
+                // make order
+                tranact = await exchange.connect(user_1).makeOrder(token_1.address, _token(3), token_2.address, _token(4))
+                res = await tranact.wait()
 
-            // approve token
-            tranact = await token_1.connect(user_1).approve(exchange.address, _token(10))
-            res = await tranact.wait()
-            tranact = await token_2.connect(user_2).approve(exchange.address, _token(10))
-            res = await tranact.wait()
-
-            // deposit token
-            tranact = await exchange.connect(user_1).depositToken(token_1.address, _token(10))
-            res = await tranact.wait()
-            tranact = await exchange.connect(user_2).depositToken(token_2.address, _token(10))
-            res = await tranact.wait()
-
-            // make order
-            tranact = await exchange.connect(user_1).makeOrder(token_1.address, _token(3), token_2.address, _token(4))
-            res = await tranact.wait()
-
-            tranact = await exchange.connect(user_2).fillOrder('1')
-            res = await tranact.wait()
+                tranact = await exchange.connect(user_2).fillOrder('1')
+                res = await tranact.wait()
+  
+            })
+            it('excute trades and charge the fees', async () => {
+                // enshre trade happens
+                expect(await exchange.balanceOf(token_1.address, user_1.address)).to.equal(_token(6.7))
+                expect(await exchange.balanceOf(token_1.address, feeAccount.address)).to.equal(_token(0.3))
+                expect(await exchange.balanceOf(token_1.address, user_2.address)).to.equal(_token(3))
+                expect(await exchange.balanceOf(token_2.address, user_1.address)).to.equal(_token(4))
+                expect(await exchange.balanceOf(token_2.address, user_2.address)).to.equal(_token(6))
+            })
+            it('upd fill orders', async () => {
+                // enshre trade happens
+                expect(await exchange.orderFailled('1')).to.equal(true)
+    
+            })
+            it('emit a fill the order', async () => {
+                const event = res.events[0]
+                expect(event.event).to.equal('Trade')
+    
+                const args = event.args
+                expect(args.id).to.equal(1)
+                expect(args.user).to.equal(user_2.address)
+                expect(args.tokenGet).to.equal(token_1.address)
+                expect(args.amountGet).to.equal(_token(3))
+                expect(args.tokenGiv).to.equal(token_2.address)
+                expect(args.amountGiv).to.equal(_token(4))
+                expect(args.creator).to.equal(user_1.address)
+                expect(args.timestamp).to.at.least(0)
+            })
         })
-        it('excute trades and charge the fees', async () => {
-            // enshre trade happens
-            expect(await exchange.balanceOf(token_1.address, user_1.address)).to.equal(_token(6.7))
-            expect(await exchange.balanceOf(token_1.address, feeAccount.address)).to.equal(_token(0.3))
-            expect(await exchange.balanceOf(token_1.address, user_2.address)).to.equal(_token(3))
-            expect(await exchange.balanceOf(token_2.address, user_1.address)).to.equal(_token(4))
-            expect(await exchange.balanceOf(token_2.address, user_2.address)).to.equal(_token(6))
-        })
-        it('emit a fill the order', async () => {
-            const event = res.events[0]
-            expect(event.event).to.equal('Trade')
-
-            const args = event.args
-            expect(args.id).to.equal(1)
-            expect(args.user).to.equal(user_2.address)
-            expect(args.tokenGet).to.equal(token_1.address)
-            expect(args.amountGet).to.equal(_token(3))
-            expect(args.tokenGiv).to.equal(token_2.address)
-            expect(args.amountGiv).to.equal(_token(4))
-            expect(args.creator).to.equal(user_1.address)
-            expect(args.timestamp).to.at.least(0)
+        describe('Failure',  () => {
+            it('reject invalid id ', async () => {
+                const invalidId = 999;
+                await expect(exchange.connect(user_2).fillOrder(invalidId)).to.be.reverted
+            })
         })
 
     })
