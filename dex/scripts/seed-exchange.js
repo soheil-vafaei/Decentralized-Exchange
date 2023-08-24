@@ -1,6 +1,8 @@
 const { ethers } = require("hardhat")
 const hre = require("hardhat");
+const config = require ("../src/config.json")
 const _token = (n) => {
+
     let _n
     _n = n * (10 ** 18)
     return _n.toString()
@@ -15,10 +17,14 @@ async function main() {
 
     const accounts = await ethers.getSigners()
 
-    const SOL = await ethers.getContractAt('Token', '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0')
-    const sETH = await ethers.getContractAt('Token', '0x5FbDB2315678afecb367f032d93F642f64180aa3')
-    const sDAI = await ethers.getContractAt('Token', '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512')
-    const Exchange = await ethers.getContractAt('Exchange', '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9')
+    const {chainId} = await ethers.provider.getNetwork()
+    console.log("using chain id: ", chainId)
+
+    const SOL = await ethers.getContractAt('Token', config[chainId].SOL.address)
+    // console.log("sol deployed", SOL.address)
+    const sETH = await ethers.getContractAt('Token', config[chainId].sETH.address)
+    const sDAI = await ethers.getContractAt('Token', config[chainId].sDAI.address)
+    const Exchange = await ethers.getContractAt('Exchange', config[chainId].Exchange.address)
 
     const sender = accounts[0]
     const reciver = accounts[1]
