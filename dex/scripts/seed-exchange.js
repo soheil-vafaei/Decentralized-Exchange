@@ -56,7 +56,6 @@ async function main() {
     res = await tranact.wait()
     console.log("makeOrder from ", user_1.address)
 
-    // orderId = res.events[0].args.id
     orderId = 1
 
     tranact = await Exchange.connect(user_1).canselOrder(orderId)
@@ -69,8 +68,12 @@ async function main() {
     res = await tranact.wait()
     console.log("makeOrder from ", user_1.address)
 
-    orderId = res.events[0].args._id
-    tranact = await Exchange.connect(user_2).fillOrder(orderId)
+    // let event = res.events[0]
+    // const args = event.args
+    // orderId = args.orderCount
+    let orderId_ = 10
+
+    tranact = await Exchange.connect(user_2).fillOrder(orderId_)
     res = await tranact.wait()
     console.log("filling order from", user_2.address)
 

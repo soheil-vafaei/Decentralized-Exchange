@@ -14,9 +14,9 @@ async function main() {
   const accounts = await ethers.getSigners()
   console.log(`accounts fetch \n ${accounts[0].address}\n ${accounts[1].address}\n }`)
 
-  const sETH = await Token.deploy("Soheil ETH", "sETH", _token(10000));
-  const sDAI = await Token.deploy("Soheil DAI", "sDAI", _token(10000));
-  const SOL = await Token.deploy("Soheil Token", "SOL", _token(10000));
+  const sETH = await Token.deploy("Soheil ETH", "sETH", _token(100));
+  const sDAI = await Token.deploy("Soheil DAI", "sDAI", _token(100));
+  const SOL = await Token.deploy("Soheil Token", "SOL", _token(100));
 
   await sETH.deployed();
   console.log(

@@ -1,5 +1,5 @@
 {
-  "name": "exchange",
+  "name": "dex",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -36,9 +36,7 @@
     ]
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.0.1",
-    "@nomicfoundation/hardhat-ethers": "^3.0.4",
-    "chai": "^4.3.7",
-    "ethers": "^6.7.0"
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.17.1"
   }
 }
